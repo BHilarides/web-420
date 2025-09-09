@@ -97,10 +97,6 @@ app.get("/", (req, res) => {
   res.send(html);
 });
 
-app.use((req, res, next) => {
-  next(createError(404, "Page Not Found"));
-});
-
 const books = require("../database/books");
 
 // GET route to return books
@@ -160,5 +156,10 @@ app.use((err, req, res, next) => {
     });
   }
 });
+
+app.use((req, res, next) => {
+  next(createError(404, "Page Not Found"));
+});
+
 
 module.exports = app;
