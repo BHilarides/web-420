@@ -101,6 +101,47 @@ app.use((req, res, next) => {
   next(createError(404, "Page Not Found"));
 });
 
+// GET route to return books
+app.get("/api/books", async (req, res, next) => {
+  try {
+    console.log("All books: ", books);
+    res.json(books); // Send the books collection as JSON response
+  } catch (err) {
+    console.error("Error: ", err.message);
+    next(err);
+  }
+});
+
+app.get("/api/books/:id", async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+
+    // Validate id
+    if (isNaN(id)) {
+      const err = new Error("Input must be a number.");
+      err.status = 400;
+      console.error("Error: ", err.message);
+      return next(err);
+    }
+
+    // Find book
+    const book = books.find((b) => b.id === id);
+
+    if (!book) {
+      const err = new Error("Book not found.");
+      err.status = 404;
+      console.error("Error: ", err.message);
+      return next(err);
+    }
+
+    console.log("Book: ", book);
+    res.json(book); // Send the found book as JSON response
+  } catch (err) {
+    console.error("Error: ", err.message);
+    next(err);
+    }
+  });
+
 app.use((err, req, res, next) => {
   res.status(err.status || 500);
 
