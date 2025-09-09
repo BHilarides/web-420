@@ -101,11 +101,14 @@ app.use((req, res, next) => {
   next(createError(404, "Page Not Found"));
 });
 
+const books = require("../database/books");
+
 // GET route to return books
 app.get("/api/books", async (req, res, next) => {
   try {
-    console.log("All books: ", books);
-    res.json(books); // Send the books collection as JSON response
+    const allBooks = await books.find();
+    console.log("All books: ", allBooks);
+    res.json(allBooks); // Send the books collection as JSON response
   } catch (err) {
     console.error("Error: ", err.message);
     next(err);
@@ -125,7 +128,7 @@ app.get("/api/books/:id", async (req, res, next) => {
     }
 
     // Find book
-    const book = books.find((b) => b.id === id);
+    const book = await books.findOne({ id });
 
     if (!book) {
       const err = new Error("Book not found.");
