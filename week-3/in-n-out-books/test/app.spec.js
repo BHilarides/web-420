@@ -28,3 +28,39 @@ describe("Chapter 3: API Tests", () => {
     expect(res.body).toHaveProperty("message", "Input must be a number.");
   });
 });
+
+describe("Chapter 4: POST /api/books", () => {
+  it("should return a 201-status code when adding a new book", async() => {
+    const newBook = {
+      id: 101,
+      title: "Pragmatic APIs with NodeJS and Express",
+      author: "Richard Krasso"
+    };
+    const res = await request(app).post("/api/books").send(newBook);
+    expect(res.statusCode).toEqual(201);
+    expect(res.body).toHaveProperty("id");
+  });
+
+  it("should return a 400-status code when adding a new book with missing title", async() => {
+    const res = await request(app).post("/api/books").send({
+      id: 102,
+      author: "Unknown" });
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toHaveProperty("message", "Book title is required.");
+  });
+
+  it("should return a 204-status code when deleting a book", async() => {
+    const bookToDelete = {
+      id: 103,
+      title: "To Be Deleted",
+      author: "Meowth"
+    };
+
+    // Create the book and capture actual ID
+    const createRes = await request(app).post("/api/books").send(bookToDelete);
+    const actualId = createRes.body.id;
+
+    const res = await request(app).delete(`/api/books/${actualId}`);
+    expect(res.statusCode).toEqual(204);
+  });
+});

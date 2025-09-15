@@ -1,6 +1,6 @@
 /*
 Author: Ben Hilarides
-Date: 8.31.25
+Date: 9.14.25
 File Name: app.js
 */
 
@@ -99,6 +99,8 @@ app.get("/", (req, res) => {
 
 const books = require("../database/books");
 
+app.use(express.json()); // Middleware to parse JSON bodies
+
 // GET route to return books
 app.get("/api/books", async (req, res, next) => {
   try {
@@ -111,6 +113,8 @@ app.get("/api/books", async (req, res, next) => {
   }
 });
 
+
+// GET route to return a single book by ID
 app.get("/api/books/:id", async (req, res, next) => {
   try {
     const id = Number(req.params.id);
@@ -141,10 +145,71 @@ app.get("/api/books/:id", async (req, res, next) => {
     }
   });
 
+// POST route to add a new book
+app.post("/api/books", async (req, res, next) => {
+  try {
+    const { title, author } = req.body;
+
+    // Validate required field
+    if (!title) {
+      const err = new Error("Book title is required.");
+      err.status = 400;
+      return next(err);
+    }
+
+    // Get all books to determine next ID
+    const allBooks = await books.find();
+    const id = allBooks.length ? Math.max(...allBooks.map(b => b.id)) + 1 : 1; // Generate new id
+    const newBook = { id, title, author };
+
+    await books.insertOne(newBook);
+
+    res.status(201).json({ id: newBook.id }); // Send the added book's id as JSON response with 201 status
+  } catch (err) {
+    console.error("Error: ", err.message);
+    next(err);
+  }
+});
+
+// Delete route to remove a book by ID
+app.delete("/api/books/:id", async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+
+    // Validate id
+    if (isNaN(id)) {
+      const err = new Error("Input must be a number.");
+      err.status = 400;
+      return next(err);
+    }
+
+    // Check if book exists
+    const book = await books.findOne({ id });
+    if (!book) {
+      const err = new Error("Book not found.");
+      err.status = 404;
+      return next(err);
+    }
+
+    // Delete book
+    await books.deleteOne({ id });
+
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+});
+
+// 404 Handler
+app.use((req, res, next) => {
+  next(createError(404, "Page Not Found"));
+});
+
+// Error handling middleware
 app.use((err, req, res, next) => {
   res.status(err.status || 500);
 
-  if (app.get("env") === "development") {
+  if (process.env.NODE_ENV === "development") {
     res.json({
       message: err.message,
       error: err.stack,
@@ -152,14 +217,9 @@ app.use((err, req, res, next) => {
   } else {
     res.json({
       message: err.message,
-      error: {},
+      error: {}
     });
   }
 });
-
-app.use((req, res, next) => {
-  next(createError(404, "Page Not Found"));
-});
-
 
 module.exports = app;
