@@ -171,6 +171,48 @@ app.post("/api/books", async (req, res, next) => {
   }
 });
 
+// PUT route to update a book by ID
+app.put("/api/books/:id", async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+
+    // Validate id
+    if (isNaN(id)) {
+      const err = new Error("Input must be a number.");
+      err.status = 400;
+      return next(err);
+    }
+
+    // Validate that title exists in body
+    const { title, author } = req.body;
+    if (!title) {
+      const err = new Error("Book title is required.");
+      err.status = 400;
+      return next(err);
+    }
+
+    // Check if book exists
+    const existingBook = await books.findOne({ id });
+    if (!existingBook) {
+      const err = new Error("Book not found.");
+      err.status = 404;
+      return next(err);
+    }
+
+    // Update book
+    await books.updateOne(
+      { id },
+      { $set: { title, author } } // update with new title/author
+    );
+
+    // Return 204 No Content
+    res.status(204).send();
+  } catch (err) {
+    console.error("Error: ", err.message);
+      next(err);
+    }
+  });
+
 // Delete route to remove a book by ID
 app.delete("/api/books/:id", async (req, res, next) => {
   try {

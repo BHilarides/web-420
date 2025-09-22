@@ -64,3 +64,8 @@ describe("Chapter 4: POST /api/books", () => {
     expect(res.statusCode).toEqual(204);
   });
 });
+
+describe("Chapter 5: API Tests", () => {
+  it("should update a book and return a 204-status code", async() => {
+
+  })
