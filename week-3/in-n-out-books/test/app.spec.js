@@ -11,8 +11,8 @@ describe("Chapter 3: API Tests", () => {
       expect(book).toHaveProperty("id");
       expect(book).toHaveProperty("title");
       expect(book).toHaveProperty("author");
-    });
   });
+});
 
   it("should return a single book", async () => {
     const res = await request(app).get("/api/books/1"); // test against known id
@@ -21,6 +21,7 @@ describe("Chapter 3: API Tests", () => {
     expect(res.body).toHaveProperty("title");
     expect(res.body).toHaveProperty("author");
   });
+
 
   it("should return a 400 error if the id is not a number", async () => {
     const res = await request(app).get("/api/books/abc"); // invalid id
@@ -45,8 +46,9 @@ describe("Chapter 4: POST /api/books", () => {
     const res = await request(app).post("/api/books").send({
       id: 102,
       author: "Unknown" });
-    expect(res.statusCode).toEqual(400);
-    expect(res.body).toHaveProperty("message", "Book title is required.");
+        expect(res.statusCode).toEqual(400);
+        expect(res.body).toHaveProperty("message", "Book title is required.");
+    });
   });
 
   it("should return a 204-status code when deleting a book", async() => {
@@ -63,9 +65,47 @@ describe("Chapter 4: POST /api/books", () => {
     const res = await request(app).delete(`/api/books/${actualId}`);
     expect(res.statusCode).toEqual(204);
   });
-});
 
 describe("Chapter 5: API Tests", () => {
   it("should update a book and return a 204-status code", async() => {
+    const createRes = await request(app).post("/api/books").send({
+      id: 300,
+      title: "Original Title",
+      author: "Original Author"
+    });
 
-  })
+    const actualId = createRes.body.id;
+
+    // Update the book
+    const updateRes = await request(app).put(`/api/books/${actualId}`).send({
+      title: "Updated Title",
+      author: "Updated Author"
+    });
+
+    expect(updateRes.statusCode).toEqual(204);
+  });
+
+  it("should return a 400-status code when using a non-numeric id for updating a book", async() => {
+    const res = await request(app).put("/api/books/xyz").send({
+      title: "Won't Work",
+      author: "Nope"
+    });
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toHaveProperty("message", "Input must be a number.");
+  });
+
+  it("should return a 400-status code when updating a book with missing title", async() => {
+    const createRes = await request(app).post("/api/books").send({
+      id: 400,
+      title: "Another Original Title",
+      author: "Another Original Author"
+    });
+    const actualId = createRes.body.id;
+    const res = await request(app).put(`/api/books/${actualId}`).send({
+      author: "Homer Simpson" });
+
+    expect(res.statusCode).toEqual(400);
+    expect(res.body).toHaveProperty("message", "Book title is required.");
+  });
+});
