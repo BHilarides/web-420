@@ -7,6 +7,7 @@ File Name: app.js
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const createError = require("http-errors");
+const users = require("../database/users");
 
 const app = express(); // Creates an Express application
 
@@ -167,6 +168,42 @@ app.post("/api/books", async (req, res, next) => {
     res.status(201).json({ id: newBook.id }); // Send the added book's id as JSON response with 201 status
   } catch (err) {
     console.error("Error: ", err.message);
+    next(err);
+  }
+});
+
+// POST route to login a user
+app.post("/api/login", async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    // Validate required fields
+    if (!email || !password) {
+      const err = new Error("Bad Request");
+      err.status = 400;
+      throw err;
+    }
+
+    // Look up user
+    const user = await users.findOne({ email });
+    if (!user) {
+      const err = new Error("Unauthorized");
+      err.status = 401;
+      throw err;
+    }
+
+    // Compare passwords
+    const isValid = bcrypt.compareSync(password, user.passwordHash);
+    if (!isValid) {
+      const err = new Error("Unauthorized");
+      err.status = 401;
+      throw err;
+    }
+
+    // Successful authentication
+    res.status(200).json({ message: "Authentication successful" });
+
+  } catch (err) {
     next(err);
   }
 });
