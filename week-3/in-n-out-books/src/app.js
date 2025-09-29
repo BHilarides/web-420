@@ -179,31 +179,26 @@ app.post("/api/login", async (req, res, next) => {
 
     // Validate required fields
     if (!email || !password) {
-      const err = new Error("Bad Request");
-      err.status = 400;
-      throw err;
+      return res.status(400).json({ message: "Bad Request" });
     }
 
     // Look up user
     const user = await users.findOne({ email });
     if (!user) {
-      const err = new Error("Unauthorized");
-      err.status = 401;
-      throw err;
+      return res.status(401).json({ message: "Unauthorized" });
     }
 
     // Compare passwords
-    const isValid = bcrypt.compareSync(password, user.passwordHash);
-    if (!isValid) {
-      const err = new Error("Unauthorized");
-      err.status = 401;
-      throw err;
+    const isMatch = bcrypt.compareSync(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Unauthorized" });
     }
 
     // Successful authentication
     res.status(200).json({ message: "Authentication successful" });
 
   } catch (err) {
+    console.error("Login Error: ", err);
     next(err);
   }
 });
