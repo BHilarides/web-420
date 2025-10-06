@@ -152,7 +152,7 @@ describe("Chapter 7: API Tests", () => {
 
 describe("Chapter 8: API Tests", () => {
   it("should return a 200 status with ‘Security questions successfully answered’ message", async() => {
-    const res = await request(app).post("/api/verify-security-questions").send({
+    const res = await request(app).post("/api/users/harry@hogwarts.edu/verify-security-questions").send({
       email: "harry@hogwarts.edu",
       answers: [
         { answer: "Hedwig" },
@@ -166,7 +166,7 @@ describe("Chapter 8: API Tests", () => {
   });
 
   it(" should return a 400 status code with ‘Bad Request’ message when the request body fails ajv validation", async() => {
-    const res = await request(app).post("/api/verify-security-questions").send({
+    const res = await request(app).post("/api/users/harry@hogwarts.edu/verify-security-questions").send({
       email: "harry@hogwarts.edu",
       answers: [
         { answer: 123 },
@@ -180,7 +180,7 @@ describe("Chapter 8: API Tests", () => {
   });
 
   it("should return a 401 status code with ‘Unauthorized’ message when security question answers are incorrect", async() => {
-    const res = await request(app).post("/api/verify-security-questions").send({
+    const res = await request(app).post("/api/users/harry@hogwarts.edu/verify-security-questions").send({
       email: "harry@hogwarts.edu",
       answers: [
         { answer: "Wrong Answer" },

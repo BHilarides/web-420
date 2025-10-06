@@ -9,10 +9,14 @@ const bcrypt = require("bcryptjs");
 const createError = require("http-errors");
 const users = require("../database/users");
 const Ajv = require("ajv");
+const addFormats = require("ajv-formats");
 
 const app = express();
 
+app.use(express.json()); // Middleware to parse JSON bodies
+
 const ajv = new Ajv();
+addFormats(ajv); // Add format validators to AJV
 
 app.get("/", (req, res) => {
   const html = `
@@ -102,8 +106,6 @@ app.get("/", (req, res) => {
 });
 
 const books = require("../database/books");
-
-app.use(express.json()); // Middleware to parse JSON bodies
 
 // GET route to return books
 app.get("/api/books", async (req, res, next) => {
@@ -206,7 +208,71 @@ app.post("/api/login", async (req, res, next) => {
   }
 });
 
+// Define the schema for validating the request body
+const answersSchema = {
+  type: "object",
+  properties: {
+    email: { type: "string", format: "email" },
+    answers: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          answer: { type: "string" }
+        },
+        required: ["answer"],
+        additionalProperties: false
+        },
+      minItems: 3,
+      }
+    },
+  required: ["answers"],
+  additionalProperties: false
+};
 
+const validateAnswers = ajv.compile(answersSchema);
+
+// POST route to verify security questions
+app.post("/api/users/:email/verify-security-questions", async (req, res, next) => {
+  try {
+    const email = req.params.email;
+    const { answers } = req.body;
+
+    // Validate request body
+    const valid = validateAnswers(req.body);
+    if (!valid) {
+      console.error("AJV Validation Failed");
+      console.error("Request Body:", JSON.stringify(req.body, null, 2));
+      console.error("Validation Errors:", validateAnswers.errors);
+
+      const err = new Error("Bad Request");
+      err.status = 400;
+      throw err;
+    }
+
+    // Look up user
+    const user = users.data.find((u) => u.email === email);
+    if (!user) {
+      const err = new Error("Unauthorized");
+      err.status = 401;
+      throw err;
+    }
+
+    // Check answers
+    const allMatch = user.securityQuestions.every((q, i) => q.answer === answers[i].answer);
+    if (!allMatch) {
+      const err = new Error("Unauthorized");
+      err.status = 401;
+      throw err;
+    }
+
+    // Successful verification
+    res.status(200).json({ message: "Security questions successfully answered" });
+  } catch (err) {
+    console.error("Error:", err.message);
+    res.status(err.status || 500).json({ message: err.message });
+  }
+});
 
 // PUT route to update a book by ID
 app.put("/api/books/:id", async (req, res, next) => {
