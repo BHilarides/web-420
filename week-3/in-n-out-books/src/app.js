@@ -8,8 +8,11 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const createError = require("http-errors");
 const users = require("../database/users");
+const Ajv = require("ajv");
 
-const app = express(); // Creates an Express application
+const app = express();
+
+const ajv = new Ajv();
 
 app.get("/", (req, res) => {
   const html = `
@@ -202,6 +205,8 @@ app.post("/api/login", async (req, res, next) => {
     next(err);
   }
 });
+
+
 
 // PUT route to update a book by ID
 app.put("/api/books/:id", async (req, res, next) => {
